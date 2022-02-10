@@ -1,0 +1,45 @@
+# 珠峰架构2021
+
+## 课件
+http://www.zhufengpeixun.com/jg-vue/vue3/1.vue3-rollup.html vue3课件
+http://www.zhufengpeixun.com/jg-vue/typescript/1.html ts课件
+http://www.zhufengpeixun.com/jg-vue/z-ui/1.html vue组件库
+http://www.zhufengpeixun.com/grow/html/103.1.webpack-usage.html  webpack课件
+http://zhufengpeixun.com/grow/html/106.1.react.html  react课件
+
+## 录播地址源码
+http://www.javascriptpeixun.cn/course/3047/tasks 预习课(架构)录播地址
+课程代码地址:https://gitee.com/jw-speed/jiagou-prepare
+百度云目录:核心课/预习课(架构)
+
+http://www.javascriptpeixun.cn/course/3108/tasks node录播地址
+百度云目录:核心课/202103Node架构课
+
+http://www.javascriptpeixun.cn/goods/show/495 vue录播地址
+课程代码地址:https://gitee.com/jw-speed/jiagouke1-vue3
+百度云目录:核心课/2021第一期Vue3架构课
+
+http://www.javascriptpeixun.cn/goods/show/166?targetId=1784&preview=0 react录播地址
+课程代码地址:https://gitee.com/zhufengpeixun/zhufengreact202105
+百度云目录:核心课/react202105
+
+http://www.javascriptpeixun.cn/goods/show/445?targetId=2624&preview=0  webpack录播地址
+课程代码地址:https://gitee.com/zhufengpeixun/zhufengwebpack202011
+百度云目录:核心课/webpack(202011)(架构)/202103
+
+
+http://www.javascriptpeixun.cn/goods/show/500?targetId=3000&preview=0 前端运维录播地址
+课程代码地址:https://gitee.com/zhufengpeixun/zhufeng_dev_ops
+百度云目录:核心课/前端运维
+
+
+
+
+码云账号密码：
+账号：3028213607@qq.com 密码：zf1234567
+
+通用课件地址
+http://zhufengpeixun.com/grow/index.html 
+1111@1111
+
+http://www.javascriptpeixun.cn/goods/show/512
