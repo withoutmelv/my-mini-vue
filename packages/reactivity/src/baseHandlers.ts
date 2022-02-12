@@ -1,9 +1,11 @@
+import { track } from "./effect";
+import { TrackOpTypes } from "./operators";
 import { reactive, readonly } from "./reactive";
 
 const get = createGetter();
 const shallowGet = createGetter(false, true);
 const readonlyGet = createGetter(true);
-const shallowReadonlyGet = createGetter(true, true)
+const shallowReadonlyGet = createGetter(true, true);
 
 const set = createSetter();
 const shallowSet = createSetter(true);
@@ -17,9 +19,10 @@ function createGetter(isReadonly = false, shallow = false) {
         const res = Reflect.get(target, key, receiver);
         if (!isReadonly) {
             // 依赖收集
+            track(target, TrackOpTypes.GET, key);
         }
         if (!shallow) { 
-            // Vue3是懒代理，当深度取值时才会进行深度代理
+            // Vue3是懒代理，当深度取值时并且值为兑现时，才会进行深度代理
             if (typeof res === 'object' && res !== null) {
                 return isReadonly ? readonly(res) : reactive(res);
             }
