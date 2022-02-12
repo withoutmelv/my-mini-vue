@@ -1,3 +1,4 @@
+import { isObject } from "@vue/shared";
 import {
   mutableHandlers,
   readonlyHandlers,
@@ -30,7 +31,7 @@ const reactiveMap = new WeakMap();
 const readonlyMap = new WeakMap();
 function createReactiveObject(target, isReadonly, baseHandlers) {
   // 1.如果不是对象直接返回
-  if (typeof target !== "object" || target === null) {
+  if (!isObject(target)) {
     return target;
   }
   const proxyMap = isReadonly ? readonlyMap : reactiveMap; // 获取缓存对象

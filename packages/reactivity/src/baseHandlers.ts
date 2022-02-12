@@ -1,3 +1,4 @@
+import { isObject } from "@vue/shared";
 import { track } from "./effect";
 import { TrackOpTypes } from "./operators";
 import { reactive, readonly } from "./reactive";
@@ -23,7 +24,8 @@ function createGetter(isReadonly = false, shallow = false) {
         }
         if (!shallow) { 
             // Vue3是懒代理，当深度取值时并且值为兑现时，才会进行深度代理
-            if (typeof res === 'object' && res !== null) {
+            // Vue2的defineProperty是一上来就进行深层的数据劫持，所以Vue2有性能缺陷
+            if (isObject(res)) {
                 return isReadonly ? readonly(res) : reactive(res);
             }
         }
