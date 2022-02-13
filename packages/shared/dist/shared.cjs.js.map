@@ -1,1 +1,1 @@
-{"version":3,"file":"shared.cjs.js","sources":[],"sourcesContent":[],"names":[],"mappings":";;"}
+{"version":3,"file":"shared.cjs.js","sources":["../src/index.ts"],"sourcesContent":["export const isObject = (res:any) => {\r\n    return typeof res === 'object' && res !== null\r\n}\r\n\r\nexport const extend = Object.assign;"],"names":[],"mappings":";;;;MAAa,QAAQ,GAAG,CAAC,GAAO;IAC5B,OAAO,OAAO,GAAG,KAAK,QAAQ,IAAI,GAAG,KAAK,IAAI,CAAA;AAClD,EAAC;MAEY,MAAM,GAAG,MAAM,CAAC;;;;;"}
