@@ -1,53 +1,59 @@
-// import {
-//     mutableHandlers,
-//     readonlyHandlers,
-//     shallowReactiveHandlers,
-//     shallowReadonlyHandlers,
-// } from './baseHandlers';
+// Reactivity
 
-export function reactive(target) {
-    return createReactiveObject(target, false, mutableHandlers);
-};
+import { isObject } from "@vue/shared";
 
-export function shallowReactive(target) {
-    return createReactiveObject(target, false, shallowReactiveHandlers);
-};
-
-export function readonly(target) {
-    return createReactiveObject(target, true, readonlyHandlers);
-};
-
-export function shallowReadonly(target) {
-    return createReactiveObject(target, true, shallowReadonlyHandlers);
-};
-
-const reactiveMap = new WeakMap();
-const readonlyMap = new WeakMap(); 
-const createReactiveObject = (target, isReadonly, baseHandlers) => {
-    if (typeof target !== 'object' || target === null) return target;
-    const proxyMap = isReadonly ? readonlyMap : reactiveMap;
-    const existingProxy = proxyMap.get(target);
-    if (existingProxy) {
-        return existingProxy;
+let uid = 0;
+let activeEffect;
+const effectStack = [];
+const createReactiveEffect = (fn, options) => {
+    const effect = () => {
+        if (effectStack.includes(effect)) return; // 防止递归情况下陷入死递归
+        activeEffect = effect;
+        effectStack.push(activeEffect);
+        fn();
+        effectStack.pop();
+        activeEffect = effectStack[effectStack.length - 1];
     }
-    const proxy = new Proxy(target, baseHandlers);
-    proxyMap.set(target, proxy);
-    return proxy;
+    effect.id = uid++;
+    effect.raw = fn;
+    effect._isEffect = true;
+    effect.options = options;
+    return effect;
 };
 
+const targetMap = new WeakMap;
+const track = (target, key) => {
+    if (activeEffect) {
+        let depsMap = targetMap.get(target);
+        if (!depsMap) {
+            targetMap.set(target, depsMap = new Map);
+        }
+        let dep = depsMap.get(key);
+        if (!dep) {
+            depsMap.set(key, dep = new Set);
+        }
+        dep.add(activeEffect);
+    }
+    
+}
 
-// import { reactive, readonly } from './reactive';
+const effect = (fn, options) => {
+    const effect = createReactiveEffect(fn, options);
+    if (!options.lazy) {
+        effect();
+    }
+    return effect;
+};
 
 const createGetter = (isReadonly = false, shallow = false) => {
     return function get(target, key, receiver) {
         const res = Reflect.get(target, key, receiver);
         if (!isReadonly) {
-            // 收集依赖
+            // 触发依赖收集
+            track(target, key);
         }
-        if (!shallow) {
-            if (typeof res === 'object' && res !== null) {
-                return isReadonly ? readonly(res) : reactive(res);
-            }
+        if (!shallow && isObject(res)) {
+            return isReadonly ? readonly(res) : reactive(res);
         }
         return res;
     }
@@ -58,44 +64,68 @@ const createSetter = (shallow = false) => {
         const res = Reflect.get(target, key, receiver);
         if (res !== value) {
             if (!shallow) {
-                // 触发 trigger
+                // trigger
             }
             return Reflect.set(target, key, value, receiver);
         }
     }
-}; 
+};
 
 const get = createGetter();
+const readonlyGet = createGetter(true);
 const shallowGet = createGetter(false, true);
-const readonlyGet = createGetter(true, false);
 const shallowReadonlyGet = createGetter(true, true);
 
-const set =  createSetter();
+const set = createSetter();
 const shallowSet = createSetter(true);
 
-
-export const mutableHandlers = {
+const mutableHandlers = {
     get,
     set,
 };
-
-export const shallowReactiveHandlers = {
-    get: shallowGet,
-    set: shallowSet,
+const readonlyHandlers = {
+    readonlyGet,
+    set: () => {
+        console.warn('');
+    },
 };
-
-export const readonlyHandlers = {
-    get: readonlyGet,
-    set: (target, key, receiver) => {
-        console.warn('cannot set key on '+ key);
-        return true;
+const shallowReactiveHandlers = {
+    shallowGet,
+    shallowSet,
+};
+const shallowReadonlyHandlers = {
+    shallowReadonlyGet,
+    set: () => {
+        console.warn('');
     },
 };
 
-export const shallowReadonlyHandlers = {
-    get: shallowReadonlyGet,
-    set: (target, key, receiver) => {
-        console.warn('cannot set key on '+ key);
-        return true;
-    },
+const reactive = (target) => {
+    return createReactiveObject(target, false, mutableHandlers);
 };
+
+const readonly = (target) => {
+    return createReactiveObject(target, true, readonlyHandlers);
+};
+
+const shallow = (target) => {
+    return createReactiveObject(target, false, shallowReactiveHandlers);
+};
+
+const shallowReadonly = (target) => {
+    return createReactiveObject(target, true, shallowReadonlyHandlers);
+};
+
+const reactiveMap = new WeakMap;
+const readonlyMap = new WeakMap;
+const createReactiveObject = (target, isReadonly, baseHandlers) => {
+    if (!isObject(target)) return target;
+    const proxyMap = isReadonly ? readonlyMap : reactiveMap;
+    const existingProxy = proxyMap.get(target);
+    if (existingProxy) {
+        return existingProxy;
+    }
+    const proxy = new Proxy(target, baseHandlers);
+    proxyMap.set(target, proxy);
+    return proxy;
+}

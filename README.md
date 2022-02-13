@@ -2,8 +2,7 @@
 - npm install yarn -g (require node >= 16.0.0)
 
 ### 安装依赖
-- yarn add typescript rollup rollup-plugin-typescript2 @rollup/plugin-node-resolve @rollup/plugin-json execa --ignore-workspace-root-check
-
+- package.json中有依赖，直接 yarn install即可
 
 ### build
 - yarn run build
@@ -16,3 +15,13 @@
 
 ### 生成tsconfig.json文件
 npx tsc --init
+
+
+
+
+
+
+
+
+
+- yarn add typescript rollup rollup-plugin-typescript2 @rollup/plugin-node-resolve @rollup/plugin-json execa --ignore-workspace-root-check
