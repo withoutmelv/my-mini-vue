@@ -16,7 +16,7 @@ const shallowSet = createSetter(true);
  * @param shallow 是不是浅响应
  */
 function createGetter(isReadonly = false, shallow = false) {
-    return function get(target, key, receiver) {
+    return function get(target: object, key: PropertyKey, receiver: any) {
         const res = Reflect.get(target, key, receiver);
         if (!isReadonly) {
             // 依赖收集
@@ -34,8 +34,8 @@ function createGetter(isReadonly = false, shallow = false) {
 }
 
 function createSetter(shallow = false) {
-    return function set(target, key, value, receiver) {
-
+    return function set(target: any, key: any, value: any, receiver: any) {
+  
     }
 }
 
@@ -45,7 +45,7 @@ export const mutableHandlers = {
 };
 export const readonlyHandlers = {
     get: readonlyGet,
-    set(target, key) {
+    set(target: any, key: any) {
         console.warn(`Set operation on key "${String(key)}" failed: target is readonly.`)
         return true;
     }
@@ -56,7 +56,7 @@ export const shallowReactiveHandlers = {
 };
 export const shallowReadonlyHandlers = {
     get: shallowReadonlyGet,
-    set(target, key) {
+    set(target: any, key: any) {
         console.warn(`Set operation on key "${String(key)}" failed: target is readonly.`)
         return true;
     }
