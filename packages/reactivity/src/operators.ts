@@ -2,7 +2,7 @@ export const enum TrackOpTypes {
     GET,
 };
 
-export const enum triggerTypes {
+export const enum TriggerOpTypes {
     ADD,
     SET,
 }

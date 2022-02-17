@@ -1,4 +1,5 @@
-import { TrackOpTypes } from "./operators";
+import { isArray, isIntegerKey } from "@vue/shared";
+import { TrackOpTypes, TriggerOpTypes } from "./operators";
 
 export const effect = (fn: any, options: { lazy: any; }) => {
     const effect = createReactiveEffect(fn, options);
@@ -17,7 +18,7 @@ const createReactiveEffect = (fn: () => void, options: any) => {
             try {
                 effectStack.push(effect);
                 activeEffect = effect;
-                fn();
+                return fn();
             }finally {
                 effectStack.pop();
                 activeEffect = effectStack[effectStack.length - 1];
@@ -49,7 +50,40 @@ export const track = (target: object, type: TrackOpTypes, key: any) => {
 };
 
 export const trigger = (target: any, type: any, key?: any, newval?: any, oldval?: any) => {
-    
+    const depsMap = targetMap.get(target);
+    if (depsMap) {
+        const effects = new Set();
+        const add = (effectsToAdd: any[]) => {
+            if (effectsToAdd) {
+                effectsToAdd.forEach((effect: any) => {
+                    effects.add(effect);
+                })
+            }
+        }
+
+        if (key === 'length' && isArray(target)) {
+            depsMap.forEach((dep:any, key:any) => {
+                if (key >= newval || key === 'length') {
+                    add(dep);
+                }
+            });
+        } else if (key !== undefined) {
+            add(depsMap.get(key)); // 新增类型的相当于add(undefined)
+        }
+        switch(type) {
+            case TriggerOpTypes.ADD:
+                if (isArray(target) && isIntegerKey(key)) {
+                    // 上面的判断条件 足够说明当前的key大于数组长度
+                    add(depsMap.get('length'));
+                }
+                break;
+            default:
+                break;
+        }
+        effects.forEach((effect:any) => {
+            effect();
+        });
+    }
 }
 
 
