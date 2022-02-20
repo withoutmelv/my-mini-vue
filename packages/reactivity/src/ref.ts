@@ -13,6 +13,7 @@ class refImpl {
     constructor(public rawValue: any, public shallow: boolean) {
 
     }
+    // object accessor 对象的属性访问器
 }
 
 

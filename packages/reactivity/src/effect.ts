@@ -80,9 +80,12 @@ export const trigger = (target: any, type: any, key?: any, newval?: any, oldval?
             default:
                 break;
         }
-        effects.forEach((effect:any) => {
+        effects.forEach((effect: any) => {
+            if(effect.options.scheduler){ // 使用调度策略优化effect的执行
+                return effect.options.scheduler(effect); // 如果有自己提供的scheduler，则执行scheduler逻辑
+            }
             effect();
-        });
+        })
     }
 }
 
