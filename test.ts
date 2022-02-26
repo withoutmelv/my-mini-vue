@@ -1,4 +1,4 @@
-import { hasOwn, isArray, isIntegerKey, isObject } from "@vue/shared";
+import { hasOwn, isArray, isChanged, isIntegerKey, isObject } from "@vue/shared";
 import { trigger } from "packages/reactivity/src/effect";
 import { TrackOpTypes, TriggerOpTypes } from "packages/reactivity/src/operators";
 // import { track } from "packages/reactivity/src/effect";
@@ -171,4 +171,67 @@ const shallowReactive = (target: any) => {
 
 const shallowReadonly = (target: any) => {
     return createReactiveObject(target, shallowReadonlyHandlers, true, true);
+}
+
+
+
+const ref = (val) => {
+    return new RefImpl();
+}
+
+const shallowRef = (val) => {
+    return new RefImpl();
+}
+
+
+const convert = (target) => {
+    return isObject(target) ? reactive(target) : ref(target);
+}
+class RefImpl {
+    private _value;
+    public readonly __v_isRef = true;
+    constructor(private _rawval, private shallow = false) {
+        this._value = shallow ? _rawval : convert(_rawval);
+    }
+
+    get value() {
+        track(this, TrackOpTypes.GET, 'value');
+        return this._rawval;
+    }
+
+    set value(newval) {
+        if (isChanged(this._rawval, newval)) {
+            this._rawval = newval;
+            this._value = this.shallow ? this._rawval : convert(this._rawval);
+            trigger(this, TriggerOpTypes.SET, 'value', newval, this._rawval);
+        }
+    }
+}
+
+
+const toRef = (target, key) => {
+    return new ObjectRefImpl(target, key);
+};
+
+const toRefs = (target) => {
+    const obj = isArray(target) ? [] : {};
+    for (let i in target) {
+        obj[i] = toRef(target, i);
+    }
+}
+
+
+class ObjectRefImpl {
+    public readonly __v_isRef = true;
+    constructor(private _target, private _key) {
+
+    }
+
+    get value() {
+        return this._target[this._key];
+    }
+
+    set value(newval) {
+        this._target[this._key] = newval; 
+    }
 }
