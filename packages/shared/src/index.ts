@@ -12,3 +12,5 @@ export const isIntegerKey = (num: any) => parseInt(num) + '' === num;
 export const hasOwn = (target: any, key: any) => Object.prototype.hasOwnProperty.call(target, key);
 
 export const isChanged = (oldval:any, newval:any) => oldval !== newval;
+
+export const isFunction = (value) => typeof value === 'function';
