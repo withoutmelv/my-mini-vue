@@ -1,6 +1,6 @@
 // 只针对具体的某个包
 const execa = require('execa')
-const target = 'reactivity'
+const target = 'runtime-core'
 execa('rollup', [
         '-wc',
         '--environment',

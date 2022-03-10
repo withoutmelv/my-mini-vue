@@ -13,4 +13,4 @@ export const hasOwn = (target: any, key: any) => Object.prototype.hasOwnProperty
 
 export const isChanged = (oldval:any, newval:any) => oldval !== newval;
 
-export const isFunction = (value) => typeof value === 'function';
+export const isFunction = (value: any) => typeof value === 'function';
