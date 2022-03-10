@@ -1,12 +1,12 @@
-import { hasOwn, isArray, isChanged, isIntegerKey, isObject } from "@vue/shared";
+import { hasOwn, isArray, isChanged, isFunction, isIntegerKey, isObject } from "@vue/shared";
 import { trigger } from "packages/reactivity/src/effect";
 import { TrackOpTypes, TriggerOpTypes } from "packages/reactivity/src/operators";
 // import { track } from "packages/reactivity/src/effect";
 
 let uid = 0;
-let activeEffect;
-const effectStack = [];
-const createReactiveEffect = (fn, options) => {
+let activeEffect: any;
+const effectStack: any[] = [];
+const createReactiveEffect = (fn: () => any, options: any) => {
     const effect = () => {
         try {
             effectStack.push(effect);
@@ -21,11 +21,14 @@ const createReactiveEffect = (fn, options) => {
     effect.options = options;
     effect._isEffect = true;
     effect.raw = fn;
+    /**
+     * @type {never[]}
+     */
     effect.deps = [];
     return effect;
 }
 
-const effect = (fn, options) => {
+const effect = (fn: any, options: { lazy: any; scheduler?: (effect: any) => void; }) => {
     const effect = createReactiveEffect(fn, options);
     if (!options.lazy) {
         effect();
@@ -34,7 +37,7 @@ const effect = (fn, options) => {
 }
 
 const targetMap = new WeakMap();
-const track = (target, type, key) => {
+const track = (target: object, type: TrackOpTypes, key: PropertyKey) => {
     if (activeEffect) {
         let depsMap = targetMap.get(target);
         if (!depsMap) {
@@ -63,17 +66,17 @@ const createGetter = (isReadonly = false, shallow = false) => {
 }
 
 
-const trigger = (target, type, key, newval, oldval?) => {
+const trigger = (target: object, type: TriggerOpTypes, key: string | number | undefined, newval: undefined, oldval?: undefined) => {
     const depsMap = targetMap.get(target);
     const effects = new Set();
-    const addToEffects = (addEffects) => {
-        addEffects.forEach(effect => {
+    const addToEffects = (addEffects: any[]) => {
+        addEffects.forEach((effect: unknown) => {
             effects.add(effect);
         });
     }
     if (depsMap) {
         if (key === 'length') {
-            depsMap.forEach((val, key) => {
+            depsMap.forEach((val: any, key: string | number) => {
                 if (isArray(target) && isIntegerKey(key) && key >= length || key === 'length') {
                     addToEffects(val);
                 }
@@ -103,7 +106,7 @@ const trigger = (target, type, key, newval, oldval?) => {
 }
 
 const createSetter = (shallow = false) => {
-    return function set(target, key, newval, receiver) {
+    return function set(target: string | object, key: PropertyKey, newval: any, receiver: any) {
         const oldval = target[key];
         const res = Reflect.set(target, key, newval, receiver);
         if (oldval !== newval) {
@@ -175,22 +178,22 @@ const shallowReadonly = (target: any) => {
 
 
 
-const ref = (val) => {
+const ref = (val: any) => {
     return new RefImpl();
 }
 
-const shallowRef = (val) => {
+const shallowRef = (val: any) => {
     return new RefImpl();
 }
 
 
-const convert = (target) => {
+const convert = (target: any) => {
     return isObject(target) ? reactive(target) : ref(target);
 }
 class RefImpl {
     private _value;
     public readonly __v_isRef = true;
-    constructor(private _rawval, private shallow = false) {
+    constructor(private _rawval: undefined, private shallow = false) {
         this._value = shallow ? _rawval : convert(_rawval);
     }
 
@@ -209,11 +212,11 @@ class RefImpl {
 }
 
 
-const toRef = (target, key) => {
+const toRef = (target: any, key: string) => {
     return new ObjectRefImpl(target, key);
 };
 
-const toRefs = (target) => {
+const toRefs = (target: any) => {
     const obj = isArray(target) ? [] : {};
     for (let i in target) {
         obj[i] = toRef(target, i);
@@ -223,7 +226,7 @@ const toRefs = (target) => {
 
 class ObjectRefImpl {
     public readonly __v_isRef = true;
-    constructor(private _target, private _key) {
+    constructor(private _target: { [x: string]: any; }, private _key: string | number) {
 
     }
 
@@ -234,4 +237,53 @@ class ObjectRefImpl {
     set value(newval) {
         this._target[this._key] = newval; 
     }
+}
+
+
+
+class ComputedRefImpl {
+    private _value:any;
+    private _dirty = true;
+    public readonly effect;
+    public readonly __v_isRef = true;
+    constructor(getter: any, private readonly setter: (arg0: any) => void) {
+        this.effect = effect(getter, {
+            lazy: true,
+            scheduler: (effect:any) => {
+                if (!this._dirty) {
+                    this._dirty = true;
+                    trigger(this, TriggerOpTypes.SET, 'value');
+                }
+            }
+        });
+    }
+
+    get value() {
+        if (this._dirty) {
+            this._dirty = false;
+            this._value = this.effect();
+            track(this, TrackOpTypes.GET, 'value');
+        }
+        return this._value;
+    }
+
+    set value(newval) {
+        this.setter(newval);
+    }
+}
+
+
+const computed = (getterOrOptions: { get: any; set: any; }) => {
+    let getter;
+    let setter;
+    if (isFunction(getterOrOptions)) {
+        getter = getterOrOptions;
+        setter = () => {
+            console.warn('computed is Readonly');
+        }
+    } else {
+        getter = getterOrOptions.get;
+        setter = getterOrOptions.set;
+    }
+    return new ComputedRefImpl(getter, setter);
 }

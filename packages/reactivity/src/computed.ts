@@ -5,6 +5,7 @@ import { TrackOpTypes, TriggerOpTypes } from "./operators";
 // computed 里面的函数不会立即执行，是懒执行的
 // computed 只有在get(即.value)的时候才去执行内部函数并拿到返回值
 // computed 有缓存特性，并不是每一次调用get(即.value)时都会执行内部函数
+// computed 本身也是响应式的，也需要有依赖的收集和更新
 
 class ComputedRefImpl {
     private _value: any;
