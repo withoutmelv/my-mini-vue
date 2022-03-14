@@ -14,3 +14,5 @@ export const hasOwn = (target: any, key: any) => Object.prototype.hasOwnProperty
 export const isChanged = (oldval:any, newval:any) => oldval !== newval;
 
 export const isFunction = (value: any) => typeof value === 'function';
+
+export const isOn = (text:any) => /^on[^a-z]/.test(text);
