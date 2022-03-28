@@ -11,9 +11,11 @@ export const effect = (fn: any, options: any) => {
 
 let uid = 0;
 let activeEffect: { (): void; id: number; _isEffect: boolean; raw: any; options: any; deps: any[]; };
+// effectStack是为了防止，effect函数内部再次调用effect，导致当effect内部的effect执行完之后回到外层effect时，activeEffect指向错误
 const effectStack: any[] = [];
 const createReactiveEffect = (fn: () => void, options: any) => {
     const effect = () => {
+        // effectStack去重是为了重复执行相同的effect
         if (!effectStack.includes(effect)) {
             try {
                 effectStack.push(effect);

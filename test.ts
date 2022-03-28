@@ -1,12 +1,12 @@
-import { hasOwn, isArray, isChanged, isFunction, isIntegerKey, isObject } from "@vue/shared";
+import { hasOwn, isArray, isChanged, isIntegerKey, isObject } from "@vue/shared";
 import { trigger } from "packages/reactivity/src/effect";
-import { TrackOpTypes, TriggerOpTypes } from "packages/reactivity/src/operators";
 // import { track } from "packages/reactivity/src/effect";
+import { TrackOpTypes, TriggerOpTypes } from "packages/reactivity/src/operators";
 
 let uid = 0;
-let activeEffect: any;
-const effectStack: any[] = [];
-const createReactiveEffect = (fn: () => any, options: any) => {
+const effectStack = [];
+let activeEffect;
+const createReactiveEffect = (fn, options) => {
     const effect = () => {
         try {
             effectStack.push(effect);
@@ -18,17 +18,14 @@ const createReactiveEffect = (fn: () => any, options: any) => {
         }
     };
     effect.id = uid++;
-    effect.options = options;
     effect._isEffect = true;
+    effect.options = options;
     effect.raw = fn;
-    /**
-     * @type {never[]}
-     */
     effect.deps = [];
     return effect;
 }
 
-const effect = (fn: any, options: { lazy: any; scheduler?: (effect: any) => void; }) => {
+const effect = (fn, options) => {
     const effect = createReactiveEffect(fn, options);
     if (!options.lazy) {
         effect();
@@ -36,254 +33,214 @@ const effect = (fn: any, options: { lazy: any; scheduler?: (effect: any) => void
     return effect;
 }
 
-const targetMap = new WeakMap();
-const track = (target: object, type: TrackOpTypes, key: PropertyKey) => {
+const targetMap = new WeakMap;
+const track = (target, type, key) => {
     if (activeEffect) {
         let depsMap = targetMap.get(target);
         if (!depsMap) {
-            targetMap.set(target, (depsMap = new Map()));
+            targetMap.set(target, depsMap = new Map());
         }
         let deps = depsMap.get(key);
         if (!deps) {
-            depsMap.set(key, (deps = new Set()));
+            depsMap.set(target, deps = new Set());
         }
-        deps.add(activeEffect);
+        deps.push(activeEffect);
+        activeEffect.deps.push(dep);
     }
-    
 }
 
-const createGetter = (isReadonly = false, shallow = false) => {
-    return function get(target: object, key: PropertyKey, receiver: any) {
-        const res = Reflect.get(target, key, receiver);
+
+const createGetter = (isReadonly = false, isShallow = false) => {
+    return function get(target, key, receiver) {
+        let res = Reflect.get(target, key, receiver);
         if (!isReadonly) {
             track(target, TrackOpTypes.GET, key);
         }
-        if (!shallow && isObject(res)) {
-            return isReadonly ? readonly(res) : reactive(res); 
+        if (!isShallow) {
+            if (isObject(res)) {
+                return res = isReadonly ? readonly(res) : reactive(res); 
+            }
         }
         return res;
-    }
-}
+    } 
+};
 
 
-const trigger = (target: object, type: TriggerOpTypes, key: string | number | undefined, newval: undefined, oldval?: undefined) => {
+// const effects = new Set();
+//         const add = (effectsToAdd: any[]) => {
+//             if (effectsToAdd) {
+//                 effectsToAdd.forEach((effect: any) => {
+//                     effects.add(effect);
+//                 })
+//             }
+//         }
+
+//         if (key === 'length' && isArray(target)) {
+//             depsMap.forEach((dep:any, key:any) => {
+//                 if (key >= newval || key === 'length') {
+//                     add(dep);
+//                 }
+//             });
+//         } else if (key !== undefined) {
+//             add(depsMap.get(key)); // 新增类型的相当于add(undefined)
+//         }
+//         switch(type) {
+//             case TriggerOpTypes.ADD:
+//                 if (isArray(target) && isIntegerKey(key)) {
+//                     // 上面的判断条件 足够说明当前的key大于数组长度
+//                     add(depsMap.get('length'));
+//                 }
+//                 break;
+//             default:
+//                 break;
+//         }
+//         effects.forEach((effect: any) => {
+//             if(effect.options.scheduler){ // 使用调度策略优化effect的执行
+//                 return effect.options.scheduler(effect); // 如果有自己提供的scheduler，则执行scheduler逻辑
+//             }
+//             effect();
+//         })
+
+
+const trigger = (target, type, key, value, oldval) => {
     const depsMap = targetMap.get(target);
-    const effects = new Set();
-    const addToEffects = (addEffects: any[]) => {
-        addEffects.forEach((effect: unknown) => {
-            effects.add(effect);
-        });
-    }
     if (depsMap) {
-        if (key === 'length') {
-            depsMap.forEach((val: any, key: string | number) => {
-                if (isArray(target) && isIntegerKey(key) && key >= length || key === 'length') {
-                    addToEffects(val);
+        const effects = new Set();
+        const add = (effectsToAdd: any[]) => {
+            if (effectsToAdd) {
+                effectsToAdd.forEach((effect: any) => {
+                    effects.add(effect);
+                })
+            }
+        }
+
+        if (key === 'length' && isArray(target)) {
+            depsMap.forEach((dep:any, key:any) => {
+                if (key >= newval || key === 'length') {
+                    add(dep);
                 }
             });
-        } else {
-            if (key !== undefined) {
-                const deps = depsMap.get(key);
-                addToEffects(deps);
-            }
-            switch(type) {
-                case TriggerOpTypes.ADD:
-                    if(isArray(target) && isIntegerKey(key) && key > length) {
-                        addToEffects(depsMap.get('length'));
-                    }
-                    break;
-                default:
-                    break;
-            }
+        } else if (key !== undefined) {
+            add(depsMap.get(key)); // 新增类型的相当于add(undefined)
         }
-        effects.forEach(effect => {
-            if (effect.options.scheduler) {
-                return effect.options.scheduler(effect);
+
+        switch(type) {
+            case TriggerOpTypes.ADD:
+                if (isArray(target) && isIntegerKey(key)) {
+                    // 上面的判断条件 足够说明当前的key大于数组长度
+                    add(depsMap.get('length'));
+                }
+                break;
+            default:
+                break;
+        }
+
+        effects.forEach((effect: any) => {
+            if(effect.options.scheduler){ // 使用调度策略优化effect的执行
+                return effect.options.scheduler(effect); // 如果有自己提供的scheduler，则执行scheduler逻辑
             }
             effect();
-        });
+        })
     }
 }
 
-const createSetter = (shallow = false) => {
-    return function set(target: string | object, key: PropertyKey, newval: any, receiver: any) {
+const  createSetter = (isReadonly = false, isShallow = false) => {
+    return function set (target, key, value, receiver) {
+        // const oldval = target[key];
+        // const hasKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key);
+        // if (!hasKey) {
+        //     trigger(target, TriggerOpTypes.ADD, key, value);
+        // } else if (isChanged(oldval, value)) {
+        //     trigger(target, TriggerOpTypes.SET, key, value, oldval);
+        // }
+        // return Reflect.set(target, key, value, receiver);
         const oldval = target[key];
-        const res = Reflect.set(target, key, newval, receiver);
-        if (oldval !== newval) {
-            const isSet = isArray(target) && isIntegerKey(key) ? key < target.length : hasOwn(target, key);
-            if (isSet) {
-                trigger(target, TriggerOpTypes.SET, key, newval, oldval);
-            } else {
-                trigger(target, TriggerOpTypes.ADD, key, newval);
-            }
+        const hasKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key);
+        if (!hasKey) {
+            trigger(target, TriggerOpTypes.ADD, key, value);
+        } else if (isChanged(oldval, value)) {
+            trigger(target, TriggerOpTypes.SET, key, value, oldval);
         }
-        return res;
+        return Reflect.set(target, key, value, receiver);
     }
+};
+
+const get = () => {
+    return createGetter();
 }
 
-const get = createGetter();
-const readonlyGet = createGetter(true);
-const shallowReactiveGet = createGetter(false, true);
-const shallowReadonlyGet = createGetter(true, true);
+const set = () => {
+    return createSetter();
+}
 
-const set = createSetter();
-const shallowReactiveSet = createSetter(true);
+const shallowReactiveGet = () => {
+    return createGetter(false, true);
+}
 
-const mutableHandlers = {
+const shallowReactiveSet = () => {
+    return createSetter(false, true);
+}
+
+const readonlyGet = () => {
+    return createGetter(true, false);
+}
+
+
+const shallowReadonlyGet = () => {
+    return createGetter(true, true);
+}
+
+const mutableHandler = {
     get,
     set,
-};
-const readonlyHandlers = {
-    get: readonlyGet,
-    set: () => {},
-};
-const shallowReactiveHandlers = {
+}
+
+const shallowReactiveHandler = {
     get: shallowReactiveGet,
     set: shallowReactiveSet,
 };
-const shallowReadonlyHandlers = {
+
+const readonlyHandler = {
+    get: readonlyGet,
+    set: () => {
+        console.warn();
+    },
+};
+
+const shallowReadonlyHandler = {
     get: shallowReadonlyGet,
     set: () => {},
 };
 
-const reactiveMap = new WeakMap();
-const readonlyMap = new WeakMap();
-const createReactiveObject = (target: object, baseHandlers: ProxyHandler<any>, isReadonly = false, shallow = false) => {
-    if (!isObject(target)) return target;
-    const proxyMap = isReadonly ? readonlyMap : reactiveMap;
-    const existingProxy = proxyMap.get(target);
+const reactiveMap = new WeakMap;
+const readonlyMap = new WeakMap;
+const createReactiveObject = (target, baseHandler, isReadonly = false, isShallow = false) => {
+    if (!isObject(target)) {
+        return target;
+    }
+    const Map = isReadonly ? readonlyMap : reactiveMap;
+    const existingProxy = Map.get(target);
     if (existingProxy) {
         return existingProxy;
     }
-    const proxy = new Proxy(target, baseHandlers);
-    proxyMap.set(target, proxy);
+    const proxy = new Proxy(target, baseHandler);
+    Map.set(target, proxy);
     return proxy;
 }
 
-const reactive = (target: any) => {
-    return createReactiveObject(target, mutableHandlers);
-};
 
-const readonly = (target: any) => {
-    return createReactiveObject(target, readonlyHandlers, true);
+const reactive = (obj) => {
+    return createReactiveObject(obj, mutableHandler);
 }
 
-const shallowReactive = (target: any) => {
-    return createReactiveObject(target, shallowReactiveHandlers, false, true);
+const shallowReactive = (obj) => {
+    return createReactiveObject(obj, shallowReactiveHandler, false, true);
 }
 
-const shallowReadonly = (target: any) => {
-    return createReactiveObject(target, shallowReadonlyHandlers, true, true);
+const readonly = (obj) => {
+    return createReactiveObject(obj, readonlyHandler, true, false);
 }
 
-
-
-const ref = (val: any) => {
-    return new RefImpl();
-}
-
-const shallowRef = (val: any) => {
-    return new RefImpl();
-}
-
-
-const convert = (target: any) => {
-    return isObject(target) ? reactive(target) : ref(target);
-}
-class RefImpl {
-    private _value;
-    public readonly __v_isRef = true;
-    constructor(private _rawval: undefined, private shallow = false) {
-        this._value = shallow ? _rawval : convert(_rawval);
-    }
-
-    get value() {
-        track(this, TrackOpTypes.GET, 'value');
-        return this._rawval;
-    }
-
-    set value(newval) {
-        if (isChanged(this._rawval, newval)) {
-            this._rawval = newval;
-            this._value = this.shallow ? this._rawval : convert(this._rawval);
-            trigger(this, TriggerOpTypes.SET, 'value', newval, this._rawval);
-        }
-    }
-}
-
-
-const toRef = (target: any, key: string) => {
-    return new ObjectRefImpl(target, key);
-};
-
-const toRefs = (target: any) => {
-    const obj = isArray(target) ? [] : {};
-    for (let i in target) {
-        obj[i] = toRef(target, i);
-    }
-}
-
-
-class ObjectRefImpl {
-    public readonly __v_isRef = true;
-    constructor(private _target: { [x: string]: any; }, private _key: string | number) {
-
-    }
-
-    get value() {
-        return this._target[this._key];
-    }
-
-    set value(newval) {
-        this._target[this._key] = newval; 
-    }
-}
-
-
-
-class ComputedRefImpl {
-    private _value:any;
-    private _dirty = true;
-    public readonly effect;
-    public readonly __v_isRef = true;
-    constructor(getter: any, private readonly setter: (arg0: any) => void) {
-        this.effect = effect(getter, {
-            lazy: true,
-            scheduler: (effect:any) => {
-                if (!this._dirty) {
-                    this._dirty = true;
-                    trigger(this, TriggerOpTypes.SET, 'value');
-                }
-            }
-        });
-    }
-
-    get value() {
-        if (this._dirty) {
-            this._dirty = false;
-            this._value = this.effect();
-            track(this, TrackOpTypes.GET, 'value');
-        }
-        return this._value;
-    }
-
-    set value(newval) {
-        this.setter(newval);
-    }
-}
-
-
-const computed = (getterOrOptions: { get: any; set: any; }) => {
-    let getter;
-    let setter;
-    if (isFunction(getterOrOptions)) {
-        getter = getterOrOptions;
-        setter = () => {
-            console.warn('computed is Readonly');
-        }
-    } else {
-        getter = getterOrOptions.get;
-        setter = getterOrOptions.set;
-    }
-    return new ComputedRefImpl(getter, setter);
+const shallowReadonly = (obj) => {
+    return createReactiveObject(obj, shallowReadonlyHandler, true, true);
 }
