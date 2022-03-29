@@ -244,3 +244,5 @@ const readonly = (obj) => {
 const shallowReadonly = (obj) => {
     return createReactiveObject(obj, shallowReadonlyHandler, true, true);
 }
+
+
