@@ -20,7 +20,6 @@
               |                     |    |                      |    |                   |
               +---------------------+    +----------------------+    +-------------------+
 
-// render函数是一个effect
 
 ### window环境中使用npm安装全局yarn
 - npm install yarn -g (require node >= 16.0.0)
@@ -40,7 +39,7 @@
 ### 生成tsconfig.json文件
 npx tsc --init
 
-
+// render函数是一个effect
 
 
 
