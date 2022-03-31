@@ -66,10 +66,107 @@ class KPromise {
         // 3.1 所以需要重新组装resolveFnQueue队列里面的函数
         return new KPromise((resolve, reject) => {
             const resolveFn = val => {
-                
-            }
-        })
+                let res = onResolved && onResolved(val);
+                if (res instanceof KPromise) {
+                    res.then(resolve);
+                } else {
+                    resolve(res);
+                }
+            };
+            this.resolveFnQueue.push(resolveFn);
+            const rejectFn = err => {
+                let res = onRejected && onRejected(err);
+                reject(res);
+            };
+            this.rejectFnQueue.push(rejectFn);
+        });
     }
+
+    catch(onRejected) {
+        return new KPromise((resolve, reject) => {
+            const rejectFn = err => {
+                onRejected && onRejected(err);
+            };
+            this.rejectFnQueue.push(rejectFn);
+        });
+    }
+
+    finally(cb) {
+        this.finallyFnQueue.push(cb);
+    }
+
+    static resolve(val) {
+        return new KPromise((resolve, reject) => {
+            resolve(val)
+        });
+    }
+
+    static reject(err) {
+        return new KPromise((resolve, reject) => {
+            reject(err);
+        });
+    }
+
+
+    static race(lists) {
+        return new KPromise((resolve, reject) => {
+            lists.forEach(list => {
+                let isFirst = true;
+                list.then(res => {
+                    isFirst && resolve(res);
+                    isFirst = false;
+                }, err => {
+                    isFirst && reject(err);
+                    if (isFirst) {
+                        isFirst = false;
+                        throw new Error(err);
+                    }
+                })
+            });
+        });
+    }
+
+    static all(lists) {
+        return new KPromise((resolve, reject) => {
+            let nums = 0;
+            let resArr = [];
+            lists.forEach((list, index) => {
+                list.then(res => {
+                    nums++;
+                    resArr[index] = res;
+                    if (nums === lists.length) resolve(resArr);
+                }, err => {
+                    reject(err);
+                    throw new Error(err);
+                });
+            });
+        });
+    }
+
+    static allSettled(lists) {
+        return new KPromise((resolve, reject) => {
+            let nums = 0;
+            let resArr = [];
+            lists.forEach((list, index) => {
+                let obj = {};
+                list.then(res => {
+                    nums++;
+                    obj.status = 'fulfilled';
+                    obj.value = res;
+                    resArr[index] = obj;
+                    if (nums === lists.length) resolve(resArr);
+                }, err => {
+                    nums++;
+                    obj.status = 'rejected';
+                    obj.reason = err;
+                    resArr[index] = obj;
+                    if (nums === lists.length) resolve(resArr);
+                });
+            });
+        });
+    }
+
+
 
 
 }
