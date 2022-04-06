@@ -39,7 +39,7 @@
 ### 生成tsconfig.json文件
 npx tsc --init
 
-
+// render函数是一个effect
 
 
 

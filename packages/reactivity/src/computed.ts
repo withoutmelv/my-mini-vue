@@ -18,9 +18,12 @@ class ComputedRefImpl {
             scheduler: (effect: any) => {
                 // 当getter内部的响应式数据trigger触发执行收集的依赖时，scheduler调用，并且将脏值设为true
                 // 由于computed只在get的时候才去执行effect,所以这里不执行effect
+                // scheduler函数的参数effect，可以看做getter，虽然并不完全相同
                 if (!this._dirty) {
                     this._dirty = true;
                     // computed本身也是响应式的，也需要有依赖的收集以及触发依赖
+                    // trigger执行了，之前对computed进行收集的依赖函数会执行，相当于会调用下面的get value方法
+                    // effect(() => myComputed.value + 10);
                     trigger(this, TriggerOpTypes.SET, 'value');
                 }
             },
