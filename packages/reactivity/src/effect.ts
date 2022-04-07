@@ -10,12 +10,14 @@ export const effect = (fn: any, options: any) => {
 };
 
 let uid = 0;
-let activeEffect: { (): void; id: number; _isEffect: boolean; raw: any; options: any; deps: any[]; };
+let activeEffect: { (): void; id: number; _isEffect: boolean; raw: any; options: any; deps: any[]; }; 
 // effectStack是为了防止，effect函数内部再次调用effect，导致当effect内部的effect执行完之后回到外层effect时，activeEffect指向错误
 const effectStack: any[] = [];
 const createReactiveEffect = (fn: () => void, options: any) => {
     const effect = () => {
         // effectStack去重是为了重复执行相同的effect
+        // effect(() => obj.foo = ob.foo + 1)，首先读取obj.foo，会触发track收集当前的effect；然后赋值obj.foo，会执行当前正在执行的effect。相当于没有结束条件的死递归
+        // 相当于避免递归函数的调用
         if (!effectStack.includes(effect)) {
             try {
                 effectStack.push(effect);
