@@ -18,6 +18,8 @@ const createReactiveEffect = (fn: () => void, options: any) => {
         // effectStack去重是为了重复执行相同的effect
         if (!effectStack.includes(effect)) {
             try {
+                // cleanup
+                cleanup(effect);
                 effectStack.push(effect);
                 activeEffect = effect;
                 return fn();
@@ -34,6 +36,18 @@ const createReactiveEffect = (fn: () => void, options: any) => {
     effect.deps = new Array();
     return effect;
 };
+
+const cleanup = (effectFn: any) => {
+    // 遍历effectFn.deps数组
+    for (let i = 0; i < effectFn.deps.length; i++) {
+        // deps是依赖集合
+        const deps = effectFn.deps[i];
+        // 将effectFn从依赖合集中移除
+        deps.delete(effectFn);
+    }
+    // 最后需要重置effectFn.deps数组
+    effectFn.deps.length = 0;
+}
 
 const targetMap = new WeakMap();
 export const track = (target: object, type: TrackOpTypes, key: any) => {
