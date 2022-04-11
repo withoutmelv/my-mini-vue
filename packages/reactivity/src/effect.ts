@@ -15,12 +15,12 @@ let activeEffect: { (): void; id: number; _isEffect: boolean; raw: any; options:
 const effectStack: any[] = [];
 const createReactiveEffect = (fn: () => void, options: any) => {
     const effect = () => {
-        // effectStack去重是为了重复执行相同的effect
+        // effectStack去重是为了防止重复执行相同的effect，即防止无限递归
         // effect(() => obj.foo = ob.foo + 1)，首先读取obj.foo，会触发track收集当前的effect；然后赋值obj.foo，会执行当前正在执行的effect。相当于没有结束条件的死递归
         // 相当于避免递归函数的调用
         if (!effectStack.includes(effect)) {
             try {
-                // cleanup
+                // 调用cleanup函数，清除遗留的副作用函数
                 cleanup(effect);
                 effectStack.push(effect);
                 activeEffect = effect;
@@ -70,7 +70,9 @@ export const track = (target: object, type: TrackOpTypes, key: any) => {
 export const trigger = (target: any, type: any, key?: any, newval?: any, oldval?: any) => {
     const depsMap = targetMap.get(target);
     if (depsMap) {
+        // 新建一个Set来代替deps（依赖集合）遍历执行副作用函数，防止cleanup和track一删一增导致无限循环
         const effects = new Set();
+        // 构建一个add函数来添加多个依赖集合（在数组长度改变以及索引超过长度时，会有多个依赖集合需要执行）
         const add = (effectsToAdd: any[]) => {
             if (effectsToAdd) {
                 effectsToAdd.forEach((effect: any) => {
