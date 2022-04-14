@@ -101,6 +101,10 @@ export const trigger = (target: any, type: any, key?: any, newval?: any, oldval?
                 break;
         }
         effects.forEach((effect: any) => {
+            // 注意这里的effect指的是effectFn（副作用函数），而不是真正的effect（注册副作用函数的函数）
+            // computed里面的scheduler之所以不执行effect，是因为computed的特性，只有在get(即.value调用)的时候才会去执行effect计算返回值
+            // watch里面的scheduler之所以不执行effect，是因为watch的effect仅仅完成了get的作用，执行不执行都一样，watch更关心callback的执行结果
+            // 不用担心上述两种情况中的effect会不会被cleanup掉，因为effect甚至都没执行
             if(effect.options.scheduler){ // 使用调度策略优化effect的执行
                 return effect.options.scheduler(effect); // 如果有自己提供的scheduler，则执行scheduler逻辑
             }
