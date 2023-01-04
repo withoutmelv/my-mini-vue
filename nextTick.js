@@ -48,10 +48,13 @@ const nextTick = (cb, ctx) => {
         }
     })
 
-    if (!pending) {
-        pending = true;
-        timerFunc();
-    }
+    // if (!pending) {
+    //     pending = true;
+    //     timerFunc();
+    // }
+    if (pending) return;
+    pending = true;
+    timerFunc();
 
     if (typeof Promise !== 'undefined' && !cb) {
         return new Promise((resolve, reject) => {
